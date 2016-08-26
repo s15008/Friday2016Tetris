@@ -185,18 +185,27 @@ class Tetromino(object):
         self.blockBoardCoords = new_block_board_coords
         return len(self.blockBoardCoords) > 0
 
-    def draw(self, screen_coords):
+    def draw(self, screen_coords, scale_x=1.0, scale_y=1.0):
         image = self.tetrominoType.blockImage
+        '''
+        if scale_x != 1.0 or scale_y != 1.0:
+            image.width = 2 // 2
+            image
+            image.height = 2 // 2
+        '''
         for coords in screen_coords:
             image.blit(coords[0], coords[1])
 
 
 class Board(object):
     STARTING_ZONE_HEIGHT = 4
-    NEXT_X = -5
-    NEXT_Y = 20
+    NEXT_X = 14
+    NEXT_Y = 15
     NEXT_X2 = NEXT_X
-    NEXT_Y2 = NEXT_Y - 4
+    NEXT_Y2 = NEXT_Y - 5
+    NEXT_X3 = NEXT_X2
+    NEXT_Y3 = NEXT_Y2 - 5
+
     NEXT_BLOCK_MAX = 3
 
     def __init__(self, x, y, grid_width, grid_height, block_size):
@@ -208,22 +217,31 @@ class Board(object):
         self.spawnX = int(grid_width * 1 / 3)
         self.spawnY = grid_height
         #self.nextTetromino = Tetromino()
+
+        # 次のテトリミノのリスト
         self.nextTetrominos = []
         for _ in range(self.NEXT_BLOCK_MAX):
             self.nextTetrominos.append(Tetromino())
         self.set_next_tetrominos_position()
+
         self.fallingTetromino = None
         #self.spawn_tetromino()
         self.spawn_tetrominos()
         self.tetrominos = []
 
     """
+    set_next_tetrominos_position
     ネクストテトリミノズにキューする
     """
     def set_next_tetrominos_position(self):
         self.nextTetrominos[0].set_position(Board.NEXT_X, Board.NEXT_Y)
-        self.nextTetrominos[-2].set_position(Board.NEXT_X2, Board.NEXT_Y2)
+        self.nextTetrominos[1].set_position(Board.NEXT_X2, Board.NEXT_Y2)
+        self.nextTetrominos[2].set_position(Board.NEXT_X3, Board.NEXT_Y3)
 
+    """
+    spawn_tetrominos
+    ネクストテトロミノリストから落下テトロミノにセットする
+    """
     def spawn_tetrominos(self):
         self.fallingTetromino = self.nextTetrominos.pop(0)
         self.fallingTetromino.set_position(self.spawnX, self.spawnY)
@@ -326,19 +344,10 @@ class Board(object):
         #screen_coords = self.grid_coords_to_screen_coords(self.nextTetromino.blockBoardCoords)
         #self.nextTetromino.draw(screen_coords)
 
-        # 次のネクストテトリミノ
-        screen_coords = self.grid_coords_to_screen_coords(self.nextTetrominos[0].blockBoardCoords) #self.nextTetromino.blockBoardCoords)
-        self.nextTetrominos[0].draw(screen_coords)
-
-        # 次の次のネクストテトリミノ
-        screen_coords = self.grid_coords_to_screen_coords(self.nextTetrominos[1].blockBoardCoords) #self.nextTetromino.blockBoardCoords)
-        self.nextTetrominos[1].draw(screen_coords)
-
-        # 次の次の次のネクストテトリミノ
-        #screen_coords = self.grid_coords_to_screen_coords(self.nextTetrominos[0].blockBoardCoords) #self.nextTetromino.blockBoardCoords)
-        #self.nextTetrominos[0].draw(screen_coords)
-
-
+        # ネクストテトリミノの描画
+        for mino in self.nextTetrominos:
+            screen_coords = self.grid_coords_to_screen_coords(mino.blockBoardCoords)
+            mino.draw(screen_coords)
 
 class InfoDisplay(object):
     ROWS_CLEARED_X = 70
