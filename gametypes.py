@@ -264,10 +264,9 @@ class Board(object):
     """
     hold_tetromino
     落下テトロミノとホールドテトロミノをスワッププレイする
+    一度ホールドしたら新しいテトロミノになるまでホールド出来ない
     """
     def hold_tetromino(self):
-        #TODO: 落下テトロミノとホールドテトロミノをスワッププレイする
-        # 一度ホールドしたら新しいテトロミノになるまでホールド出来ない
         if self.isholded:
             return
         self.isholded = True
