@@ -2,7 +2,6 @@ import random
 
 import pyglet
 
-
 class TetrominoType(object):
     def __init__(self, block_image, local_block_coords_by_orientation):
         self.blockImage = block_image
@@ -102,7 +101,6 @@ class TetrominoType(object):
     def random_type():
         return random.choice(TetrominoType.TYPES)
 
-
 class Tetromino(object):
     RIGHT, DOWN, LEFT, UP = range(4)
     CLOCKWISE_ROTATIONS = {RIGHT: DOWN, DOWN: LEFT, LEFT: UP, UP: RIGHT}
@@ -196,9 +194,10 @@ class Tetromino(object):
         for coords in screen_coords:
             image.blit(coords[0], coords[1])
 
-
 class Board(object):
     STARTING_ZONE_HEIGHT = 4
+    HOLD_X = -4
+    HOLD_Y = 16
     NEXT_X = 14
     NEXT_Y = 15
     NEXT_X2 = NEXT_X
@@ -224,8 +223,11 @@ class Board(object):
             self.nextTetrominos.append(Tetromino())
         self.set_next_tetrominos_position()
 
+        # ホールド中のテトリミノ
+        self.holdedTetromino = None
+        self.isholded = False
+
         self.fallingTetromino = None
-        #self.spawn_tetromino()
         self.spawn_tetrominos()
         self.tetrominos = []
 
@@ -259,6 +261,29 @@ class Board(object):
         if not self.is_valid_position():
             self.fallingTetromino.undo_command(command)
 
+    """
+    hold_tetromino
+    落下テトロミノとホールドテトロミノをスワッププレイする
+    """
+    def hold_tetromino(self):
+        #TODO: 落下テトロミノとホールドテトロミノをスワッププレイする
+        # 一度ホールドしたら新しいテトロミノになるまでホールド出来ない
+        if self.isholded:
+            return
+        self.isholded = True
+
+        if self.holdedTetromino == None:
+            self.holdedTetromino = self.fallingTetromino
+            self.holdedTetromino.set_position(Board.HOLD_X , Board.HOLD_Y)
+            self.spawn_tetrominos()
+        else:
+            tmp =  self.fallingTetromino
+            self.fallingTetromino = self.holdedTetromino
+            self.holdedTetromino = tmp
+
+            self.fallingTetromino.set_position(tmp.x, tmp.y)
+            self.holdedTetromino.set_position(Board.HOLD_X , Board.HOLD_Y)
+
     def is_valid_position(self):
         non_falling_block_coords = []
         for tetromino in self.tetrominos:
@@ -271,6 +296,10 @@ class Board(object):
                 return False
         return True
 
+    """
+    find_full_rows
+    横一列が揃っている列を探す
+    """
     def find_full_rows(self):
         non_falling_block_coords = []
         for tetromino in self.tetrominos:
@@ -300,6 +329,10 @@ class Board(object):
         for row in grid_rows:
             self.clear_row(row)
 
+    """
+    update_tick
+    テトリミノ落下時の処理
+    """
     def update_tick(self):
         num_cleared_rows = 0
         game_lost = False
@@ -314,6 +347,8 @@ class Board(object):
                 #self.spawn_tetromino()
                 self.spawn_tetrominos()
             num_cleared_rows = len(full_rows)
+            # テトロミノが落下したらホールド禁止を解除する
+            self.isholded = False
         return num_cleared_rows, game_lost
 
     def is_in_start_zone(self, tetromino):
@@ -336,8 +371,7 @@ class Board(object):
                 tetromino.blockBoardCoords)
             tetromino.draw(screen_coords)
 
-        screen_coords = self.grid_coords_to_screen_coords(
-            self.fallingTetromino.blockBoardCoords)
+        screen_coords = self.grid_coords_to_screen_coords(self.fallingTetromino.blockBoardCoords)
         self.fallingTetromino.draw(screen_coords)
 
         # old
@@ -348,6 +382,11 @@ class Board(object):
         for mino in self.nextTetrominos:
             screen_coords = self.grid_coords_to_screen_coords(mino.blockBoardCoords)
             mino.draw(screen_coords)
+
+        # ホールドテトロミノの描画
+        if self.holdedTetromino != None:
+            screen_coords = self.grid_coords_to_screen_coords(self.holdedTetromino.blockBoardCoords)
+            self.holdedTetromino.draw(screen_coords)
 
 class InfoDisplay(object):
     ROWS_CLEARED_X = 70
@@ -386,9 +425,8 @@ class InfoDisplay(object):
         if self.showGameoverLabel:
             self.gameoverLabel.draw()
 
-
 class Input(object):
-    TOGGLE_PAUSE, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, ROTATE_CLOCKWISE = range(5)
+    TOGGLE_PAUSE, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, ROTATE_CLOCKWISE, TOGGLE_HOLD = range(6)
 
     def __init__(self):
         self.action = None
@@ -396,6 +434,8 @@ class Input(object):
     def process_keypress(self, symbol, modifiers):
         if symbol == pyglet.window.key.SPACE:
             self.action = Input.TOGGLE_PAUSE
+        if symbol == pyglet.window.key.LSHIFT:
+            self.action = Input.TOGGLE_HOLD
 
     def process_text_motion(self, motion):
         if motion == pyglet.window.key.MOTION_LEFT:
@@ -411,7 +451,6 @@ class Input(object):
         action = self.action
         self.action = None
         return action
-
 
 class GameTick(object):
     def __init__(self, tick_on_first_call=False):
@@ -433,7 +472,6 @@ class GameTick(object):
         else:
             return False
 
-
 class Game(object):
     def __init__(self, board, info_display, key_input, background_image):
         self.board = board
@@ -446,6 +484,10 @@ class Game(object):
         self.tickSpeed = 0.6    #落下スピード間隔
         self.ticker = GameTick()
 
+    """
+    add_rows_cleared
+    削除した列を加算して描画を更新する
+    """
     def add_rows_cleared(self, rows_cleared):
         self.numRowsCleared += rows_cleared
         self.infoDisplay.set_rows_cleared(self.numRowsCleared)
@@ -464,6 +506,8 @@ class Game(object):
             if not self.paused:
                 if command and command != Input.TOGGLE_PAUSE:
                     self.board.command_falling_tetromino(command)
+                    if command == Input.TOGGLE_HOLD:
+                        self.board.hold_tetromino()
                 if self.ticker.is_tick(self.tickSpeed):
                     rows_cleared, self.lost = self.board.update_tick()
                     self.add_rows_cleared(rows_cleared)
