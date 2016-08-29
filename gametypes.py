@@ -48,51 +48,46 @@ class TetrominoType(object):
             # type S
             TetrominoType(green,
                           {
-                              Tetromino.RIGHT: [(1, 0), (1, 1), (2, 1),
-                                                (2, 2)],
-                              Tetromino.DOWN: [(2, 0), (1, 0), (1, 1), (0, 1)],
-                              Tetromino.LEFT: [(1, 0), (1, 1), (2, 1), (2, 2)],
-                              Tetromino.UP: [(2, 0), (1, 0), (1, 1), (0, 1)],
+                              Tetromino.RIGHT: [(2, 0), (1, 0), (1, 1), (0, 1)],
+                              Tetromino.DOWN: [(1, 0), (1, 1), (2, 1), (2, 2)],
+                              Tetromino.LEFT: [(2, 0), (1, 0), (1, 1), (0, 1)],
+                              Tetromino.UP: [(1, 0), (1, 1), (2, 1), (2, 2)],
                           }
                           ),
             # type Z
             TetrominoType(red,
                           {
-                              Tetromino.RIGHT: [(2, 0), (2, 1), (1, 1),
-                                                (1, 2)],
-                              Tetromino.DOWN: [(2, 2), (1, 2), (1, 1), (0, 1)],
-                              Tetromino.LEFT: [(2, 0), (2, 1), (1, 1), (1, 2)],
-                              Tetromino.UP: [(2, 2), (1, 2), (1, 1), (0, 1)],
+                              Tetromino.RIGHT: [(2, 2), (1, 2), (1, 1), (0, 1)],
+                              Tetromino.DOWN: [(2, 0), (2, 1), (1, 1), (1, 2)],
+                              Tetromino.LEFT: [(2, 2), (1, 2), (1, 1), (0, 1)],
+                              Tetromino.UP: [(2, 0), (2, 1), (1, 1), (1, 2)],
                           }
                           ),
             # type J
             TetrominoType(blue,
                           {
-                              Tetromino.RIGHT: [(2, 0), (1, 0), (1, 1),
-                                                (1, 2)],
-                              Tetromino.DOWN: [(2, 2), (2, 1), (1, 1), (0, 1)],
-                              Tetromino.LEFT: [(1, 0), (1, 1), (1, 2), (0, 2)],
-                              Tetromino.UP: [(0, 0), (0, 1), (1, 1), (2, 1)],
+                              Tetromino.RIGHT: [(1, 0), (1, 1), (1, 2), (2, 2)],
+                              Tetromino.DOWN: [(2, 0), (2, 1), (1, 1), (0, 1)],
+                              Tetromino.LEFT: [(0, 0), (1, 0), (1, 1), (1, 2)],
+                              Tetromino.UP: [(2, 1), (1, 1), (0, 1), (0, 2)],
                           }
                           ),
             # type L
             TetrominoType(orange,
                           {
-                              Tetromino.RIGHT: [(0, 0), (1, 0), (1, 1),
-                                                (1, 2)],
-                              Tetromino.DOWN: [(2, 0), (2, 1), (1, 1), (0, 1)],
-                              Tetromino.LEFT: [(1, 0), (1, 1), (1, 2), (2, 2)],
-                              Tetromino.UP: [(2, 1), (1, 1), (0, 1), (0, 2)],
+                              Tetromino.RIGHT: [(2, 0), (1, 0), (1, 1), (1, 2)],
+                              Tetromino.DOWN: [(0, 0), (0, 1), (1, 1), (2, 1)],
+                              Tetromino.LEFT: [(1, 0), (1, 1), (1, 2), (0, 2)],
+                              Tetromino.UP: [(2, 2), (2, 1), (1, 1), (0, 1)],
                           }
                           ),
             # type T
             TetrominoType(purple,
                           {
-                              Tetromino.RIGHT: [(2, 1), (1, 1), (0, 1),
-                                                (1, 2)],
-                              Tetromino.DOWN: [(1, 0), (1, 1), (1, 2), (0, 1)],
+                              Tetromino.RIGHT: [(2, 1), (1, 1), (0, 1), (1, 2)],
+                              Tetromino.DOWN: [(1, 0), (1, 1), (1, 2), (2, 1)],
                               Tetromino.LEFT: [(2, 1), (1, 1), (0, 1), (1, 0)],
-                              Tetromino.UP: [(1, 0), (1, 1), (1, 2), (2, 1)],
+                              Tetromino.UP: [(1, 0), (1, 1), (1, 2), (0, 1)],
                           }
                           ),
         ]
