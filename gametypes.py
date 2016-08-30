@@ -66,19 +66,19 @@ class TetrominoType(object):
             # type J
             TetrominoType(blue,
                           {
-                              Tetromino.RIGHT: [(1, 0), (1, 1), (1, 2), (2, 2)],
-                              Tetromino.DOWN: [(2, 0), (2, 1), (1, 1), (0, 1)],
-                              Tetromino.LEFT: [(0, 0), (1, 0), (1, 1), (1, 2)],
-                              Tetromino.UP: [(2, 1), (1, 1), (0, 1), (0, 2)],
+                              Tetromino.RIGHT: [(2, 1), (1, 1), (0, 1), (0, 2)],
+                              Tetromino.DOWN: [(1, 0), (1, 1), (1, 2), (2, 2)],
+                              Tetromino.LEFT: [(2, 0), (2, 1), (1, 1), (0, 1)],
+                              Tetromino.UP: [(0, 0), (1, 0), (1, 1), (1, 2)],
                           }
                           ),
             # type L
             TetrominoType(orange,
                           {
-                              Tetromino.RIGHT: [(2, 0), (1, 0), (1, 1), (1, 2)],
-                              Tetromino.DOWN: [(0, 0), (0, 1), (1, 1), (2, 1)],
-                              Tetromino.LEFT: [(1, 0), (1, 1), (1, 2), (0, 2)],
-                              Tetromino.UP: [(2, 2), (2, 1), (1, 1), (0, 1)],
+                              Tetromino.RIGHT: [(2, 2), (2, 1), (1, 1), (0, 1)],
+                              Tetromino.DOWN: [(2, 0), (1, 0), (1, 1), (1, 2)],
+                              Tetromino.LEFT: [(0, 0), (0, 1), (1, 1), (2, 1)],
+                              Tetromino.UP: [(1, 0), (1, 1), (1, 2), (0, 2)],
                           }
                           ),
             # type T
@@ -488,6 +488,17 @@ class GameTick(object):
             return False
 
 class Game(object):
+    TICK_SPEED_0 = 0.6
+    TICK_SPEED_1 = 0.4
+    TICK_SPEED_2 = 0.2
+    TICK_SPEED_3 = 0.1
+    TICK_SPEED_4 = 0.05
+    SCORE_LINE_0 = 0
+    SCORE_LINE_1 = 5
+    SCORE_LINE_2 = 10
+    SCORE_LINE_3 = 15
+    SCORE_LINE_4 = 20
+
     def __init__(self, board, info_display, key_input, background_image):
         self.board = board
         self.infoDisplay = info_display
@@ -496,8 +507,8 @@ class Game(object):
         self.paused = False
         self.lost = False
         self.numRowsCleared = 0 #削除したラインの数
-        self.scorePoints = 0    #スコア
-        self.tickSpeed = 0.6    #落下スピード間隔
+        self.scorePoints = 0 #スコア
+        self.tickSpeed = self.TICK_SPEED_0 #落下スピード間隔
         self.ticker = GameTick()
 
     """
@@ -505,7 +516,6 @@ class Game(object):
     削除した列を加算する
     """
     def add_rows_cleared(self, rows_cleared):
-        print("add_rows_cleared")
         self.numRowsCleared += rows_cleared
         self.infoDisplay.set_rows_cleared(self.numRowsCleared)
 
@@ -514,19 +524,34 @@ class Game(object):
     削除した列に応じてスコアポイントを加算する
     """
     def add_score_points(self, rows_cleared):
-        print("add_score_points")
         if rows_cleared <= 0:
             return
         elif rows_cleared == 1:
             self.scorePoints += 1
         elif rows_cleared == 2:
-            self.scorePoints += 1
+            self.scorePoints += 2
         elif rows_cleared == 3:
             self.scorePoints += 5
         elif rows_cleared <= 4:
             self.scorePoints += 8
 
         self.infoDisplay.set_score_points(self.scorePoints)
+
+    """
+    change_tick_speed
+    スコアポイントに応じたテトロミノの落下スピード変更
+    """
+    def change_tick_speed(self, scorePoints):
+        if scorePoints >= self.SCORE_LINE_4:
+            self.tickSpeed = self.TICK_SPEED_4
+        elif scorePoints >= self.SCORE_LINE_3:
+            self.tickSpeed = self.TICK_SPEED_3
+        elif scorePoints >= self.SCORE_LINE_2:
+            self.tickSpeed = self.TICK_SPEED_2
+        elif scorePoints >= self.SCORE_LINE_1:
+            self.tickSpeed = self.TICK_SPEED_1
+        else:
+            self.tickSpeed = self.TICK_SPEED_0
 
     def toggle_pause(self):
         self.paused = not self.paused
@@ -546,9 +571,9 @@ class Game(object):
                         self.board.hold_tetromino()
                 if self.ticker.is_tick(self.tickSpeed):
                     rows_cleared, self.lost = self.board.update_tick()
-                    print("rows_cleared = ", rows_cleared)
                     self.add_rows_cleared(rows_cleared)
                     self.add_score_points(rows_cleared)
+                    self.change_tick_speed(self.scorePoints)
 
     def draw(self):
         self.backgroundImage.blit(0, 0)
