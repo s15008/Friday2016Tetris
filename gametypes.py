@@ -266,17 +266,19 @@ class Board(object):
             return
         self.isholded = True
 
+        # ホールドが空だった場合
         if self.holdedTetromino == None:
             self.holdedTetromino = self.fallingTetromino
             self.holdedTetromino.set_position(Board.HOLD_X , Board.HOLD_Y)
             self.spawn_tetrominos()
+            self.isholded = False
         else:
             tmp =  self.fallingTetromino
             self.fallingTetromino = self.holdedTetromino
             self.holdedTetromino = tmp
-
-            self.fallingTetromino.set_position(tmp.x, tmp.y)
+            self.fallingTetromino.set_position(self.spawnX, self.spawnY)
             self.holdedTetromino.set_position(Board.HOLD_X , Board.HOLD_Y)
+
 
     def is_valid_position(self):
         non_falling_block_coords = []
