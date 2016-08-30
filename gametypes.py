@@ -191,8 +191,8 @@ class Tetromino(object):
 
 class Board(object):
     STARTING_ZONE_HEIGHT = 4
-    HOLD_X = -4
-    HOLD_Y = 16
+    HOLD_X = -7
+    HOLD_Y = 15
     NEXT_X = 14
     NEXT_Y = 15
     NEXT_X2 = NEXT_X
@@ -383,15 +383,24 @@ class Board(object):
             self.holdedTetromino.draw(screen_coords)
 
 class InfoDisplay(object):
-    ROWS_CLEARED_X = 70
-    ROWS_CLEARED_Y = 550
+    ROWS_CLEARED_X = 180
+    ROWS_CLEARED_Y = 155
+    SCORE_POINTS_X = 180
+    SCORE_POINTS_Y = 305
+
 
     def __init__(self, window):
-        self.rowsClearedLabel = pyglet.text.Label('Rows cleared: 0',
+        self.rowsClearedLabel = pyglet.text.Label('0',
                                                   font_size=14,
                                                   x=InfoDisplay.ROWS_CLEARED_X,
                                                   y=InfoDisplay.ROWS_CLEARED_Y
                                                   )
+        self.scorePointsLabel = pyglet.text.Label('0',
+                                                  font_size=14,
+                                                  x=InfoDisplay.SCORE_POINTS_X,
+                                                  y=InfoDisplay.SCORE_POINTS_Y
+                                                  )
+
         self.pausedLabel = pyglet.text.Label('PAUSED',
                                              font_size=32,
                                              x=window.width // 2,
@@ -409,11 +418,23 @@ class InfoDisplay(object):
         self.showPausedLabel = False
         self.showGameoverLabel = False
 
+    """
+    set_rows_cleared
+    削除したラインの数の描画を更新する　
+    """
     def set_rows_cleared(self, num_rows_cleared):
-        self.rowsClearedLabel.text = 'Rows cleared: ' + str(num_rows_cleared)
+        self.rowsClearedLabel.text = str(num_rows_cleared)
+
+    """
+    set_score_points
+    スコアポイントの描画を更新する　
+    """
+    def set_score_points(self, score_points):
+        self.scorePointsLabel.text = str(score_points)
 
     def draw(self):
         self.rowsClearedLabel.draw()
+        self.scorePointsLabel.draw()
         if self.showPausedLabel:
             self.pausedLabel.draw()
         if self.showGameoverLabel:
@@ -474,17 +495,38 @@ class Game(object):
         self.backgroundImage = background_image
         self.paused = False
         self.lost = False
-        self.numRowsCleared = 0
+        self.numRowsCleared = 0 #削除したラインの数
+        self.scorePoints = 0    #スコア
         self.tickSpeed = 0.6    #落下スピード間隔
         self.ticker = GameTick()
 
     """
     add_rows_cleared
-    削除した列を加算して描画を更新する
+    削除した列を加算する
     """
     def add_rows_cleared(self, rows_cleared):
+        print("add_rows_cleared")
         self.numRowsCleared += rows_cleared
         self.infoDisplay.set_rows_cleared(self.numRowsCleared)
+
+    """
+    add_score_points
+    削除した列に応じてスコアポイントを加算する
+    """
+    def add_score_points(self, rows_cleared):
+        print("add_score_points")
+        if rows_cleared <= 0:
+            return
+        elif rows_cleared == 1:
+            self.scorePoints += 1
+        elif rows_cleared == 2:
+            self.scorePoints += 1
+        elif rows_cleared == 3:
+            self.scorePoints += 5
+        elif rows_cleared <= 4:
+            self.scorePoints += 8
+
+        self.infoDisplay.set_score_points(self.scorePoints)
 
     def toggle_pause(self):
         self.paused = not self.paused
@@ -504,7 +546,9 @@ class Game(object):
                         self.board.hold_tetromino()
                 if self.ticker.is_tick(self.tickSpeed):
                     rows_cleared, self.lost = self.board.update_tick()
+                    print("rows_cleared = ", rows_cleared)
                     self.add_rows_cleared(rows_cleared)
+                    self.add_score_points(rows_cleared)
 
     def draw(self):
         self.backgroundImage.blit(0, 0)
