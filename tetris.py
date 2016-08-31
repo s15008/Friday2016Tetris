@@ -16,7 +16,8 @@ window.set_vsync(False)
 ###### load resources ######
 backgroundImage = pyglet.resource.image('background.png')
 blocksImage = pyglet.resource.image('blocks.png')
-gametypes.TetrominoType.class_init(blocksImage, BLOCK_SIZE)
+blocksGhostImage = pyglet.resource.image('blocks_ghost.png')
+gametypes.TetrominoType.class_init(blocksImage, blocksGhostImage, BLOCK_SIZE)
 
 ###### init game state ######
 board = gametypes.Board(BOARD_X, BOARD_Y, GRID_WIDTH, GRID_HEIGHT, BLOCK_SIZE)

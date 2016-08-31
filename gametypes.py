@@ -1,14 +1,17 @@
 import random
+import copy
 
 import pyglet
 
 class TetrominoType(object):
-    def __init__(self, block_image, local_block_coords_by_orientation):
+    def __init__(self, block_image, blockGhostImage, local_block_coords_by_orientation):
         self.blockImage = block_image
+        self.blockGhostImage = blockGhostImage
         self.localBlockCoordsByOrientation = local_block_coords_by_orientation
 
     @staticmethod
-    def class_init(block_image, block_size):
+    def class_init(block_image, blockGhostImage, block_size):
+        # 通常ミノ画像イメージ
         cyan = block_image.get_region(x=0, y=0, width=block_size,
                                       height=block_size)
         yellow = block_image.get_region(x=block_size, y=0, width=block_size,
@@ -23,30 +26,43 @@ class TetrominoType(object):
                                         width=block_size, height=block_size)
         purple = block_image.get_region(x=block_size * 6, y=0,
                                         width=block_size, height=block_size)
+        # ゴーストミノ画像イメージ
+        cyan_g = blockGhostImage.get_region(x=0, y=0, width=block_size,
+                                      height=block_size)
+        yellow_g = blockGhostImage.get_region(x=block_size, y=0, width=block_size,
+                                        height=block_size)
+        green_g = blockGhostImage.get_region(x=block_size * 2, y=0, width=block_size,
+                                       height=block_size)
+        red_g = blockGhostImage.get_region(x=block_size * 3, y=0, width=block_size,
+                                     height=block_size)
+        blue_g = blockGhostImage.get_region(x=block_size * 4, y=0, width=block_size,
+                                      height=block_size)
+        orange_g = blockGhostImage.get_region(x=block_size * 5, y=0,
+                                        width=block_size, height=block_size)
+        purple_g = blockGhostImage.get_region(x=block_size * 6, y=0,
+                                        width=block_size, height=block_size)
 
         TetrominoType.TYPES = [
             # type I
-            TetrominoType(cyan,
+            TetrominoType(cyan, cyan_g,
                           {
-                              Tetromino.RIGHT: [(0, 1), (1, 1), (2, 1),
-                                                (3, 1)],
+                              Tetromino.RIGHT: [(0, 1), (1, 1), (2, 1), (3, 1)],
                               Tetromino.DOWN: [(1, 0), (1, 1), (1, 2), (1, 3)],
                               Tetromino.LEFT: [(0, 2), (1, 2), (2, 2), (3, 2)],
                               Tetromino.UP: [(2, 0), (2, 1), (2, 2), (2, 3)],
                           }
                           ),
             # type O
-            TetrominoType(yellow,
+            TetrominoType(yellow, yellow_g,
                           {
-                              Tetromino.RIGHT: [(0, 0), (0, 1), (1, 0),
-                                                (1, 1)],
+                              Tetromino.RIGHT: [(0, 0), (0, 1), (1, 0), (1, 1)],
                               Tetromino.DOWN: [(0, 0), (0, 1), (1, 0), (1, 1)],
                               Tetromino.LEFT: [(0, 0), (0, 1), (1, 0), (1, 1)],
                               Tetromino.UP: [(0, 0), (0, 1), (1, 0), (1, 1)],
                           }
                           ),
             # type S
-            TetrominoType(green,
+            TetrominoType(green, green_g,
                           {
                               Tetromino.RIGHT: [(2, 0), (1, 0), (1, 1), (0, 1)],
                               Tetromino.DOWN: [(1, 0), (1, 1), (2, 1), (2, 2)],
@@ -55,7 +71,7 @@ class TetrominoType(object):
                           }
                           ),
             # type Z
-            TetrominoType(red,
+            TetrominoType(red, red_g,
                           {
                               Tetromino.RIGHT: [(2, 2), (1, 2), (1, 1), (0, 1)],
                               Tetromino.DOWN: [(2, 0), (2, 1), (1, 1), (1, 2)],
@@ -64,7 +80,7 @@ class TetrominoType(object):
                           }
                           ),
             # type J
-            TetrominoType(blue,
+            TetrominoType(blue, blue_g,
                           {
                               Tetromino.RIGHT: [(2, 1), (1, 1), (0, 1), (0, 2)],
                               Tetromino.DOWN: [(1, 0), (1, 1), (1, 2), (2, 2)],
@@ -73,7 +89,7 @@ class TetrominoType(object):
                           }
                           ),
             # type L
-            TetrominoType(orange,
+            TetrominoType(orange, orange_g,
                           {
                               Tetromino.RIGHT: [(2, 2), (2, 1), (1, 1), (0, 1)],
                               Tetromino.DOWN: [(2, 0), (1, 0), (1, 1), (1, 2)],
@@ -82,7 +98,7 @@ class TetrominoType(object):
                           }
                           ),
             # type T
-            TetrominoType(purple,
+            TetrominoType(purple, purple_g,
                           {
                               Tetromino.RIGHT: [(2, 1), (1, 1), (0, 1), (1, 2)],
                               Tetromino.DOWN: [(1, 0), (1, 1), (1, 2), (2, 1)],
@@ -178,14 +194,12 @@ class Tetromino(object):
         self.blockBoardCoords = new_block_board_coords
         return len(self.blockBoardCoords) > 0
 
-    def draw(self, screen_coords, scale_x=1.0, scale_y=1.0):
-        image = self.tetrominoType.blockImage
-        '''
-        if scale_x != 1.0 or scale_y != 1.0:
-            image.width = 2 // 2
-            image
-            image.height = 2 // 2
-        '''
+    def draw(self, screen_coords, isGhost=False):
+        if isGhost:
+            image = self.tetrominoType.blockGhostImage
+        else:
+            image = self.tetrominoType.blockImage
+
         for coords in screen_coords:
             image.blit(coords[0], coords[1])
 
@@ -225,6 +239,10 @@ class Board(object):
         self.fallingTetromino = None
         self.spawn_tetrominos()
         self.tetrominos = []
+
+        # ゴーストミノ
+        self.ghostTetromino = Tetromino()
+        self.update_ghost_tetrimino()
 
     """
     set_next_tetrominos_position
@@ -267,7 +285,7 @@ class Board(object):
         self.isholded = True
 
         # ホールドが空だった場合
-        if self.holdedTetromino == None:
+        if self.holdedTetromino is None:
             self.holdedTetromino = self.fallingTetromino
             self.holdedTetromino.set_position(Board.HOLD_X , Board.HOLD_Y)
             self.spawn_tetrominos()
@@ -279,12 +297,33 @@ class Board(object):
             self.fallingTetromino.set_position(self.spawnX, self.spawnY)
             self.holdedTetromino.set_position(Board.HOLD_X , Board.HOLD_Y)
 
+    """
+    update_ghost_tetrimino
+    ゴーストテトリミノの位置を更新する
+    """
+    def update_ghost_tetrimino(self):
+        self.ghostTetromino.x = self.fallingTetromino.x
+        self.ghostTetromino.y = self.fallingTetromino.y
+        self.ghostTetromino.tetrominoType = self.fallingTetromino.tetrominoType
+        self.ghostTetromino.orientation = self.fallingTetromino.orientation
+        self.ghostTetromino.blockBoardCoords = self.fallingTetromino.blockBoardCoords
+        while True:
+            if not self.is_valid_position(self.ghostTetromino):
+                self.ghostTetromino.undo_command(Input.MOVE_DOWN)
+                break
+            self.ghostTetromino.command(Input.MOVE_DOWN)
 
-    def is_valid_position(self):
+    """
+    is_valid_position
+    テトリミノが落下可能かどうかを判断する
+    落下可能ならTrueを返す
+    """
+    def is_valid_position(self, targetTetromino=None):
+        if targetTetromino is None: targetTetromino = self.fallingTetromino
         non_falling_block_coords = []
         for tetromino in self.tetrominos:
             non_falling_block_coords.extend(tetromino.blockBoardCoords)
-        for coord in self.fallingTetromino.blockBoardCoords:
+        for coord in targetTetromino.blockBoardCoords:
             out_of_bounds = coord[0] < 0 or coord[0] >= self.gridWidth or \
                             coord[1] < 0
             overlapping = coord in non_falling_block_coords
@@ -340,11 +379,11 @@ class Board(object):
             self.clear_rows(full_rows)
             game_lost = self.is_in_start_zone(self.fallingTetromino)
             if not game_lost:
-                #self.spawn_tetromino()
                 self.spawn_tetrominos()
             num_cleared_rows = len(full_rows)
             # テトロミノが落下したらホールド禁止を解除する
             self.isholded = False
+
         return num_cleared_rows, game_lost
 
     def is_in_start_zone(self, tetromino):
@@ -362,17 +401,20 @@ class Board(object):
         return screen_coords
 
     def draw(self):
+        # 積まれてるミノの描画
         for tetromino in self.tetrominos:
             screen_coords = self.grid_coords_to_screen_coords(
                 tetromino.blockBoardCoords)
             tetromino.draw(screen_coords)
 
+        # ゴーストテトロミノの描画
+        if self.ghostTetromino is not None:
+            screen_coords = self.grid_coords_to_screen_coords(self.ghostTetromino.blockBoardCoords)
+            self.ghostTetromino.draw(screen_coords, isGhost=True)
+
+        # 落下ミノの描画
         screen_coords = self.grid_coords_to_screen_coords(self.fallingTetromino.blockBoardCoords)
         self.fallingTetromino.draw(screen_coords)
-
-        # old
-        #screen_coords = self.grid_coords_to_screen_coords(self.nextTetromino.blockBoardCoords)
-        #self.nextTetromino.draw(screen_coords)
 
         # ネクストテトリミノの描画
         for mino in self.nextTetrominos:
@@ -380,7 +422,7 @@ class Board(object):
             mino.draw(screen_coords)
 
         # ホールドテトロミノの描画
-        if self.holdedTetromino != None:
+        if self.holdedTetromino is not None:
             screen_coords = self.grid_coords_to_screen_coords(self.holdedTetromino.blockBoardCoords)
             self.holdedTetromino.draw(screen_coords)
 
@@ -576,6 +618,7 @@ class Game(object):
                     self.add_rows_cleared(rows_cleared)
                     self.add_score_points(rows_cleared)
                     self.change_tick_speed(self.scorePoints)
+                self.board.update_ghost_tetrimino()
 
     def draw(self):
         self.backgroundImage.blit(0, 0)
