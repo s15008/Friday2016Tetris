@@ -666,7 +666,8 @@ class Game(object):
                         self.board.hold_tetromino()
                     if command == Input.Z:
                         self.board.hard_drop()
-                if self.ticker.is_tick(self.tickSpeed):
+                        self.isInfinity = False
+                if self.ticker.is_tick(self.tickSpeed) or command == Input.Z:
                     rows_cleared, self.lost = self.board.update_tick(self.isInfinity)
                     self.add_rows_cleared(rows_cleared)
                     self.add_score_points(rows_cleared)
