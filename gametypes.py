@@ -1,5 +1,4 @@
 import random
-import copy
 
 import pyglet
 
@@ -122,6 +121,16 @@ class Tetromino(object):
         self.tetrominoType = TetrominoType.random_type()
         self.orientation = Tetromino.RIGHT
         self.blockBoardCoords = self.calc_block_board_coords()
+
+    def get_deepcopy(self):
+        copy = Tetromino()
+        copy.x = self.x
+        copy.y = self.y
+        copy.tetrominoType = self.tetrominoType
+        copy.orientation = self.orientation
+        copy.blockBoardCoords = self.blockBoardCoords
+
+        return copy
 
     def calc_block_board_coords(self):
         local_block_coords = self.tetrominoType.localBlockCoordsByOrientation[
@@ -275,6 +284,16 @@ class Board(object):
             self.fallingTetromino.undo_command(command)
 
     """
+    hard_drop
+    押した時点の落下予定位置にテトロミノを固定する
+    ゴーストテトロミノ依存
+
+    """
+    def hard_drop(self):
+        self.fallingTetromino.x = self.ghostTetromino.x
+        self.fallingTetromino.y = self.ghostTetromino.y
+
+    """
     hold_tetromino
     落下テトロミノとホールドテトロミノをスワッププレイする
     一度ホールドしたら新しいテトロミノになるまでホールド出来ない
@@ -302,11 +321,7 @@ class Board(object):
     ゴーストテトリミノの位置を更新する
     """
     def update_ghost_tetrimino(self):
-        self.ghostTetromino.x = self.fallingTetromino.x
-        self.ghostTetromino.y = self.fallingTetromino.y
-        self.ghostTetromino.tetrominoType = self.fallingTetromino.tetrominoType
-        self.ghostTetromino.orientation = self.fallingTetromino.orientation
-        self.ghostTetromino.blockBoardCoords = self.fallingTetromino.blockBoardCoords
+        self.ghostTetromino = self.fallingTetromino.get_deepcopy()
         while True:
             if not self.is_valid_position(self.ghostTetromino):
                 self.ghostTetromino.undo_command(Input.MOVE_DOWN)
@@ -485,7 +500,7 @@ class InfoDisplay(object):
             self.gameoverLabel.draw()
 
 class Input(object):
-    TOGGLE_PAUSE, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, ROTATE_CLOCKWISE, TOGGLE_HOLD = range(6)
+    TOGGLE_PAUSE, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, ROTATE_CLOCKWISE, TOGGLE_HOLD, Z = range(7)
 
     def __init__(self):
         self.action = None
@@ -495,6 +510,8 @@ class Input(object):
             self.action = Input.TOGGLE_PAUSE
         if symbol == pyglet.window.key.LSHIFT:
             self.action = Input.TOGGLE_HOLD
+        if symbol == pyglet.window.key.Z:
+            self.action = Input.Z
 
     def process_text_motion(self, motion):
         if motion == pyglet.window.key.MOTION_LEFT:
@@ -613,6 +630,8 @@ class Game(object):
                     self.board.command_falling_tetromino(command)
                     if command == Input.TOGGLE_HOLD:
                         self.board.hold_tetromino()
+                    if command == Input.Z:
+                        self.board.hard_drop()
                 if self.ticker.is_tick(self.tickSpeed):
                     rows_cleared, self.lost = self.board.update_tick()
                     self.add_rows_cleared(rows_cleared)
