@@ -233,7 +233,6 @@ class Board(object):
         self.blockSize = block_size
         self.spawnX = int(grid_width * 1 / 3)
         self.spawnY = grid_height
-        #self.nextTetromino = Tetromino()
 
         # 次のテトリミノのリスト
         self.nextTetrominos = []
@@ -243,8 +242,9 @@ class Board(object):
 
         # ホールド中のテトリミノ
         self.holdedTetromino = None
-        self.isholded = False
+        self.isHolded = False
 
+        # 落下中のテトリミノズ
         self.fallingTetromino = None
         self.spawn_tetrominos()
         self.tetrominos = []
@@ -272,16 +272,46 @@ class Board(object):
         self.nextTetrominos.append(Tetromino())
         self.set_next_tetrominos_position()
 
-    def spawn_tetromino(self):
-        self.fallingTetromino = self.nextTetromino
-        self.nextTetromino = Tetromino()
-        self.fallingTetromino.set_position(self.spawnX, self.spawnY)
-        self.nextTetromino.set_position(Board.NEXT_X, Board.NEXT_Y)
-
+    """
+    command_falling_tetromino
+    入力を見て移動可能であればテトロミノを入力方向に移動する
+    """
     def command_falling_tetromino(self, command):
         self.fallingTetromino.command(command)
+        if command == Input.ROTATE_CLOCKWISE:
+            self.super_rotation()
+        else:
+            if not self.is_valid_position():
+                print("other")
+                self.fallingTetromino.undo_command(command)
+
+    """
+    super_rotation
+    スーパーテーション
+    """
+    #TODO: スーパーローテーション
+    def super_rotation(self):
+        for coord in self.fallingTetromino.blockBoardCoords:
+            # 左壁面に入り込んでいた場合
+            if coord[0] < 0:
+                self.fallingTetromino.command(Input.MOVE_RIGHT)
+                if not self.is_valid_position():
+                    print("not")
+                    self.fallingTetromino.undo_command(Input.MOVE_RIGHT)
+                    self.fallingTetromino.undo_command(Input.ROTATE_CLOCKWISE)
+                print("side Left")
+            # 左壁面に入り込んでいた場合
+            elif coord[0] >= self.gridWidth:
+                self.fallingTetromino.command(Input.MOVE_LEFT)
+                self.fallingTetromino.command(Input.ROTATE_CLOCKWISE)
+                if not self.is_valid_position():
+                    self.fallingTetromino.undo_command(Input.MOVE_LEFT)
+                print("side Right")
+            else:
+                if not self.is_valid_position():
+                    print("noside")
         if not self.is_valid_position():
-            self.fallingTetromino.undo_command(command)
+            self.fallingTetromino.undo_command(Input.ROTATE_CLOCKWISE)
 
     """
     hard_drop
@@ -299,16 +329,16 @@ class Board(object):
     一度ホールドしたら新しいテトロミノになるまでホールド出来ない
     """
     def hold_tetromino(self):
-        if self.isholded:
+        if self.isHolded:
             return
-        self.isholded = True
+        self.isHolded = True
 
         # ホールドが空だった場合
         if self.holdedTetromino is None:
             self.holdedTetromino = self.fallingTetromino
             self.holdedTetromino.set_position(Board.HOLD_X , Board.HOLD_Y)
             self.spawn_tetrominos()
-            self.isholded = False
+            self.isHolded = False
         else:
             tmp =  self.fallingTetromino
             self.fallingTetromino = self.holdedTetromino
@@ -339,8 +369,7 @@ class Board(object):
         for tetromino in self.tetrominos:
             non_falling_block_coords.extend(tetromino.blockBoardCoords)
         for coord in targetTetromino.blockBoardCoords:
-            out_of_bounds = coord[0] < 0 or coord[0] >= self.gridWidth or \
-                            coord[1] < 0
+            out_of_bounds = coord[0] < 0 or coord[0] >= self.gridWidth or coord[1] < 0
             overlapping = coord in non_falling_block_coords
             if out_of_bounds or overlapping:
                 return False
@@ -383,21 +412,22 @@ class Board(object):
     update_tick
     テトリミノ落下時の処理
     """
-    def update_tick(self):
+    def update_tick(self, isInfinity):
         num_cleared_rows = 0
         game_lost = False
         self.fallingTetromino.command(Input.MOVE_DOWN)
         if not self.is_valid_position():
             self.fallingTetromino.undo_command(Input.MOVE_DOWN)
-            self.tetrominos.append(self.fallingTetromino)
-            full_rows = self.find_full_rows()
-            self.clear_rows(full_rows)
-            game_lost = self.is_in_start_zone(self.fallingTetromino)
-            if not game_lost:
-                self.spawn_tetrominos()
-            num_cleared_rows = len(full_rows)
-            # テトロミノが落下したらホールド禁止を解除する
-            self.isholded = False
+            if not isInfinity:
+                self.tetrominos.append(self.fallingTetromino)
+                full_rows = self.find_full_rows()
+                self.clear_rows(full_rows)
+                game_lost = self.is_in_start_zone(self.fallingTetromino)
+                if not game_lost:
+                    self.spawn_tetrominos()
+                num_cleared_rows = len(full_rows)
+                # テトロミノが落下したらホールド禁止を解除する
+                self.isHolded = False
 
         return num_cleared_rows, game_lost
 
@@ -572,6 +602,9 @@ class Game(object):
         self.tickSpeed = self.TICK_SPEED_0 #落下スピード間隔
         self.ticker = GameTick()
 
+        # インフィニティ
+        self.isInfinity = False
+
     """
     add_rows_cleared
     削除した列を加算する
@@ -627,16 +660,18 @@ class Game(object):
                 self.toggle_pause()
             if not self.paused:
                 if command and command != Input.TOGGLE_PAUSE:
+                    self.isInfinity = True
                     self.board.command_falling_tetromino(command)
                     if command == Input.TOGGLE_HOLD:
                         self.board.hold_tetromino()
                     if command == Input.Z:
                         self.board.hard_drop()
                 if self.ticker.is_tick(self.tickSpeed):
-                    rows_cleared, self.lost = self.board.update_tick()
+                    rows_cleared, self.lost = self.board.update_tick(self.isInfinity)
                     self.add_rows_cleared(rows_cleared)
                     self.add_score_points(rows_cleared)
                     self.change_tick_speed(self.scorePoints)
+                    self.isInfinity = False
                 self.board.update_ghost_tetrimino()
 
     def draw(self):
