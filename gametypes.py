@@ -48,7 +48,7 @@ class TetrominoType(object):
                               Tetromino.RIGHT: [(0, 1), (1, 1), (2, 1), (3, 1)],
                               Tetromino.DOWN: [(1, 0), (1, 1), (1, 2), (1, 3)],
                               Tetromino.LEFT: [(0, 2), (1, 2), (2, 2), (3, 2)],
-                              Tetromino.UP: [(2, 0), (2, 1), (2, 2), (2, 3)],
+                              Tetromino.UP: [(1, 0), (1, 1), (1, 2), (1, 3)],
                           }
                           ),
             # type O
@@ -291,27 +291,33 @@ class Board(object):
     """
     #TODO: スーパーローテーション
     def super_rotation(self):
+        direction = None
+
         for coord in self.fallingTetromino.blockBoardCoords:
             # 左壁面に入り込んでいた場合
             if coord[0] < 0:
-                self.fallingTetromino.command(Input.MOVE_RIGHT)
-                if not self.is_valid_position():
-                    print("not")
-                    self.fallingTetromino.undo_command(Input.MOVE_RIGHT)
-                    self.fallingTetromino.undo_command(Input.ROTATE_CLOCKWISE)
-                print("side Left")
-            # 左壁面に入り込んでいた場合
+                direction = Input.MOVE_LEFT
+            # 右壁面に入り込んでいた場合
             elif coord[0] >= self.gridWidth:
-                self.fallingTetromino.command(Input.MOVE_LEFT)
+                direction = Input.MOVE_RIGHT
+
+        if direction == Input.MOVE_LEFT:
+            print("side Left")
+            self.fallingTetromino.command(Input.MOVE_RIGHT)
+            if not self.is_valid_position():
+                print("not")
+                self.fallingTetromino.undo_command(Input.MOVE_RIGHT)
+                self.fallingTetromino.undo_command(Input.ROTATE_CLOCKWISE)
+        elif direction == Input.MOVE_RIGHT:
+            print("side Right")
+            self.fallingTetromino.command(Input.MOVE_LEFT)
+            if not self.is_valid_position():
+                self.fallingTetromino.undo_command(Input.MOVE_LEFT)
                 self.fallingTetromino.command(Input.ROTATE_CLOCKWISE)
-                if not self.is_valid_position():
-                    self.fallingTetromino.undo_command(Input.MOVE_LEFT)
-                print("side Right")
-            else:
-                if not self.is_valid_position():
-                    print("noside")
-        if not self.is_valid_position():
-            self.fallingTetromino.undo_command(Input.ROTATE_CLOCKWISE)
+        else:
+            print("noside")
+            if not self.is_valid_position():
+                self.fallingTetromino.undo_command(Input.ROTATE_CLOCKWISE)
 
     """
     hard_drop
